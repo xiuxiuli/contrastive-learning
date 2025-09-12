@@ -1,0 +1,46 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# ---- Jupyter Notebook ----
+.ipynb_checkpoints/
+*.ipynb~
+
+# ---- VSCode / IDE ----
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ---- Virtual Environment ----
+.env
+.venv/
+env/
+venv/
+*.egg-info/
+
+# ---- Data ----
+data/
+datasets/
+*.csv
+*.tsv
+*.json
+*.xlsx
+*.zip
+*.tar
+*.gz
+
+# ---- Models / Checkpoints ----
+checkpoints/
+outputs/
+logs/
+*.pth
+*.pt
+*.ckpt
+
+# ---- System ----
+.DS_Store
+Thumbs.db
