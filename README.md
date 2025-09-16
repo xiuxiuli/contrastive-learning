@@ -11,10 +11,10 @@
 工具：torchvision, scikit-learn, Faiss, Matplotlib/Seaborn
 
 模块	            说明
-Encoder	            ResNet-18 / ResNet-50
-Projection Head	    2-layer MLP
+Encoder	          ResNet-18 / ResNet-50
+Projection Head	  2-layer MLP
 Loss	            NT-Xent (SimCLR), InfoNCE (MoCo), BYOL loss
-Methods	            SimCLR, MoCo, BYOL
+Methods	          SimCLR, MoCo, BYOL
 Augmentations	    RandomResizedCrop, ColorJitter, GaussianBlur, HorizontalFlip
 
 📂 数据集与实验路线
