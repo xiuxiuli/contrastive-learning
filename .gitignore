@@ -23,8 +23,8 @@ venv/
 *.egg-info/
 
 # ---- Data ----
-data/
-datasets/
+data/*
+!data/*.py
 *.csv
 *.tsv
 *.json
