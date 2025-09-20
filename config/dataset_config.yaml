@@ -3,9 +3,9 @@ sampling:
   shuffle: true
 
 path:
-  root: "./data"
+  root: "./data/raw"
 
-active_dataset: "stl10"
+active_dataset: "cline9"
 
 datasets:
   stl10:
@@ -21,9 +21,10 @@ datasets:
     train_size: 5000
     val_size: null
 
-  imagenet100:
+  # hugging face clane9/imagenet-100
+  cline9:
     train_split: "train"
-    val_split: "val"
+    val_split: "validation"
     train_size: 10000
     val_size: 2000
 

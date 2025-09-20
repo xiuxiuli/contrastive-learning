@@ -4,4 +4,5 @@ PyYAML>=6.0
 numpy>=1.23
 matplotlib>=3.6
 scikit-learn>=1.2   
-tqdm>=4.65          
+tqdm>=4.65
+datasets>=4.1.1         
