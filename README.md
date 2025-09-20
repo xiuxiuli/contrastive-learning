@@ -1,50 +1,36 @@
-🧭 Contrastive Learning Project
+# 🚀 Contrastive Learning Project Plan
 
-📌 项目概述
+## 1. Objectives
 
-本项目实现并比较多种 对比学习 (Contrastive Learning) 方法，包括 SimCLR, MoCo, BYOL，并在 STL-10 / ImageNet-100 数据集上进行自监督表征学习。通过在下游任务（分类、检索、半监督学习）中的迁移实验，展示对比学习在企业应用中的潜力。
+* Implement and train a contrastive learning encoder (SimCLR baseline) on **ImageNet-100**.
+* Extend to **mini-CLIP** (aligning image ↔ text embeddings, supporting zero-shot classification).
+* Build a **retrieval system demo** (Faiss + Streamlit, supporting image-to-image and text-to-image search).
+* Conduct **ablation studies & visualization** (augmentation strategies, temperature scaling, queue size).
 
-🔧 技术栈
+---
 
-语言：Python
-框架：PyTorch (+ Lightning 可选)
-工具：torchvision, scikit-learn, Faiss, Matplotlib/Seaborn
+## 2. Development Phases & Core Tasks
 
-模块	            说明
-Encoder	          ResNet-18 / ResNet-50
-Projection Head	  2-layer MLP
-Loss	            NT-Xent (SimCLR), InfoNCE (MoCo), BYOL loss
-Methods	          SimCLR, MoCo, BYOL
-Augmentations	    RandomResizedCrop, ColorJitter, GaussianBlur, HorizontalFlip
+| Phase                                | Timeline (Est.) | Core Tasks                                                                                                                                                       | Models / Methods                                   |
+| ------------------------------------ | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| **Phase 1: Setup**                   | Week 1–2        | - Project initialization (code structure, configs)<br>- Data loading (ImageNet-100)<br>- Implement data augmentation pipeline (crop, color jitter, blur, flip)   | `torchvision.transforms`, DataLoader               |
+| **Phase 2: Baseline**                | Week 3–4        | - Implement SimCLR model (ResNet-50 encoder + MLP head)<br>- Train & evaluate with linear probe                                                                  | ResNet-50, NT-Xent loss                            |
+| **Phase 3: Multimodal Extension**    | Week 5–6        | - Add text encoder (MiniLM / DistilBERT)<br>- Train mini-CLIP (image embeddings ↔ class text embeddings)<br>- Test zero-shot classification                      | SimCLR encoder + MiniLM encoder + Contrastive loss |
+| **Phase 4: Retrieval Application**   | Week 7          | - Build embedding index with Faiss<br>- Implement image-to-image and text-to-image retrieval<br>- Deploy Streamlit demo                                          | Faiss, Streamlit                                   |
+| **Phase 5: Expansion & Analysis**    | Week 8–9        | - Ablation studies (augmentation combinations, temperature, queue size)<br>- Robustness evaluation (noise, blur)<br>- Visualization of embeddings (t-SNE / UMAP) | Ablation configs, sklearn.manifold (t-SNE), UMAP   |
+| **Phase 6: Finalization & Delivery** | Week 10         | - Summarize results & visualizations<br>- Write technical report<br>- Extract résumé highlights<br>- Release codebase & demo                                     | Markdown report, GitHub repo                       |
 
-📂 数据集与实验路线
-阶段 1：STL-10 → 主实验（无标签预训练 + 下游评估）
-阶段 3：ImageNet-100 → 扩展实验（资源允许）
+---
 
-🧪 下游任务
-Linear Probe：冻结 encoder，训练线性分类器
-Fine-tuning：微调 encoder
-Retrieval Demo：embedding 最近邻检索 (Faiss)
-Semi-Supervised：无标签预训练 + 少量标签微调
+## 3. Models & Methods Summary
 
-🎓 涉及知识点
-CNN (ResNet)
-自监督学习 (Contrastive Learning)
-损失函数 (InfoNCE, NT-Xent, BYOL loss)
-负样本策略 (batch 内 vs memory queue)
-数据增强与表示学习
-下游任务迁移 (分类/检索/半监督)
+* **Encoder**: ResNet-50 (`torchvision.models`)
+* **Projection Head**: 2-layer MLP (hidden=2048, output=128)
+* **Loss Functions**: NT-Xent (SimCLR), InfoNCE (for CLIP alignment)
+* **Text Encoders**: MiniLM / DistilBERT (HuggingFace Transformers)
+* **Retrieval Tools**: Faiss (IndexFlatIP / HNSW)
+* **Visualization**: t-SNE, UMAP, matplotlib / seaborn
+* **Demo Framework**: Streamlit WebApp
 
-🚀 可扩展创新点
-方法对比 (SimCLR vs MoCo vs BYOL)
-数据增强实验 (不同组合的影响)
-Retrieval Demo（输入一张图返回相似图像）
-mini-CLIP（图像 + 类别文本 embedding 对齐）
+---
 
-🏢 企业应用价值
-图像检索/推荐：电商、医疗、制造业
-半监督分类：低标注场景
-多模态检索：图像 ↔ 文本（CLIP思路）
-异常检测：金融风控、工业质检、安防
-
-一句话：对比学习是“特征工厂”，能把无标签数据转化为企业可用表征。
