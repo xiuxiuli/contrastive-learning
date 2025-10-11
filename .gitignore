@@ -44,3 +44,19 @@ logs/
 # ---- System ----
 .DS_Store
 Thumbs.db
+
+# ============================
+# Google Colab / Drive mounts
+# ============================
+/content/
+drive/
+MyDrive/
+gdrive/
+Colab_Notebooks/
+
+# ============================
+# Misc
+# ============================
+*.log
+*.bak
+*.tmp

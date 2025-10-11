@@ -18,7 +18,7 @@ def setup_environment(cfg):
 
     print(f"[INFO] Using device: {device}")
     print(f"[INFO] Method: {method}")
-    print("=" * 30)
+    print("=" * 40)
 
 
 def main():
