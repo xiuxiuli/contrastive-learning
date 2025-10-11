@@ -1,0 +1,21 @@
+method: simclr
+device: cuda
+
+seed: 42
+
+train:
+  batch_size: 256
+  num_workers: 4
+  epochs: 100
+  lr: 0.0003
+  temperature: 0.5
+  log_interval: 50
+
+model:
+  base_encoder: resnet50
+  projection_dim: 128
+
+dataset:
+  root: ./data/raw
+  train_split: train
+  val_split: validation
