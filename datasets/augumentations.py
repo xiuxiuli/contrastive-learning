@@ -1,11 +1,13 @@
+# datasets/augmentations.py
 import random
 from torchvision import transforms
 from PIL import Image, ImageFilter
 import torch
-import sys, os
+import os, sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 from utils import config_util as cfg_util
+
 
 class GaussianBlur(object):
     """Implements Gaussian blur as in SimCLR (Appendix A)."""
@@ -15,13 +17,13 @@ class GaussianBlur(object):
 
     def __call__(self, x):
         if random.random() < self.p:
-            return x.filter(ImageFilter.GaussianBlur(
-                radius=random.uniform(0.1, 2.0)))
+            radius = random.uniform(0.1, 2.0)
+            return x.filter(ImageFilter.GaussianBlur(radius=radius))
         return x
 
 
 class SimCLRAugment:
-    """Industrial-grade SimCLR augmentation pipeline (configurable)."""
+    """Configurable SimCLR augmentation pipeline."""
 
     def __init__(self, config):
         aug_cfg = config["augmentations"]
@@ -55,8 +57,8 @@ class SimCLRAugment:
             ),
         ])
 
-        # optional random erase
-        if aug_cfg["random_erase"]["use"]:
+        # Optional random erase
+        if aug_cfg.get("random_erase", {}).get("use", False):
             self.train_transform.transforms.append(
                 transforms.RandomErasing(
                     p=aug_cfg["random_erase"]["p"],
@@ -72,8 +74,7 @@ class SimCLRAugment:
         return q, k
 
 
-def build_simclr_transform(yaml_path):
+def build_simclr_transform_from_yaml(yaml_path="./config/augmentation_config.yaml"):
     """Load YAML config and return a SimCLR transform."""
-    cfg = cfg_util.load_yaml('./config/augumentation_config.yaml')
-
+    cfg = cfg_util.load_yaml(yaml_path)
     return SimCLRAugment(cfg)
