@@ -5,7 +5,7 @@ Usage:
 """
 import torch
 import os
-from utils import config_util as util
+from utils import tool as util
 from train import train_simclr, train_clip 
 
 def setup_environment(cfg):

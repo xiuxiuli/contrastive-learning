@@ -6,7 +6,7 @@ import torch
 import os, sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
-from utils import config_util as cfg_util
+from utils import tool as cfg_util
 
 
 class GaussianBlur(object):

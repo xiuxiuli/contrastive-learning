@@ -1,0 +1,21 @@
+# =============================
+# global paths
+# =============================
+root:
+  local: "./data"
+  colab: "/content/drive/MyDrive/amazon_review_RLHF/data"
+
+sampling:
+  seed: 234
+  shuffle: true
+
+active_dataset: "cline9"
+
+dataset:
+  name: "ilee0022/ImageNet100"
+  output_subdir: "raw"
+  cline9:
+    train_split: "train"
+    val_split: "validation"
+
+   
