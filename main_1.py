@@ -1,8 +1,11 @@
 """
-Main training entry for contrastive learning project.
-Usage:
-    python main_train.py --method simclr --config ./config/train_config.yaml
+main.py — Unified Hydra + Lightning + MLflow Pipeline
+Author: Xiuxiu Li
+------------------------------------------------------
+Controls multi-stage workflow:
+DINOv2 → Linear Probe → CLIP → Demo
 """
+
 import torch
 import os
 from utils import tool as util

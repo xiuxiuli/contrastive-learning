@@ -1,0 +1,23 @@
+# Linear Probe Evaluation Stage
+description: "2 - Evaluate DINOv2 encoder representations by training a linear classifier on ImageNet-100."
+
+train:
+  epochs: 30
+  batch_size: 256
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  freeze_backbone: true
+  num_classes: 100
+  pretrained_encoder: "runs/dinov2_exp1/encoder_student.pt"
+  save_dir: "runs/linear_probe_exp1"
+
+data:
+  name: "ilee0022/ImageNet100"
+  cache_dir: "data/raw"
+  image_size: 224
+  split_train: "train"
+  split_val: "validation"
+
+model:
+  backbone: "vit_base_patch16"
+  classifier_dim: 1000

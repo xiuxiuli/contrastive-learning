@@ -1,0 +1,25 @@
+# DINOv2 Self-Supervised Visual Pretraining Stage
+description: "1 - Self-supervised visual representation learning on ImageNet-100 using DINOv2 framework."
+
+train:
+  epochs: 100
+  batch_size: 256
+  learning_rate: 0.0003
+  weight_decay: 0.0001
+  momentum_teacher: 0.996
+  warmup_epochs: 10
+  save_dir: "runs/dinov2_exp1"
+
+data:
+  name: "ilee0022/ImageNet100"
+  cache_dir: "data/raw"
+  image_size: 224
+
+model:
+  backbone: "vit_base_patch16"
+  projection_dim: 256
+  hidden_dim: 4096
+  use_teacher: true
+  temperature_student: 0.1
+  temperature_teacher: 0.04
+  center_momentum: 0.9

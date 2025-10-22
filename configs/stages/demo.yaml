@@ -1,0 +1,13 @@
+# Retrieval Demo Stage
+description: "4 - Deploy retrieval demo using trained CLIP embeddings (Faiss + Streamlit)."
+
+demo:
+  index_path: "runs/clip_exp1/faiss_index.bin"
+  encoder_image_path: "runs/clip_exp1/encoder_image.pt"
+  encoder_text_path: "runs/clip_exp1/encoder_text.pt"
+  dataset_name: "ilee0022/ImageNet100"
+  cache_dir: "data/raw"
+  image_size: 224
+  top_k: 5
+  host: "0.0.0.0"
+  port: 8501

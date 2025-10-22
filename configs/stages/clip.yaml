@@ -1,0 +1,23 @@
+# mini-CLIP Multimodal Alignment Stage
+description: "3 - Train image and text encoders jointly for multimodal alignment using DINOv2 encoder initialization."
+
+train:
+  epochs: 20
+  batch_size: 128
+  learning_rate: 0.0001
+  weight_decay: 0.0001
+  temperature: 0.07
+  save_dir: "runs/clip_exp1"
+  pretrained_image_encoder: "runs/dinov2_exp1/encoder_student.pt"
+
+data:
+  image_dataset: "ilee0022/ImageNet100"
+  text_dataset: "HuggingFaceH4/multi-modal-captions"   # placeholder for captions/text pairs
+  cache_dir: "data/raw"
+  image_size: 224
+  tokenizer: "sentence-transformers/all-MiniLM-L6-v2"
+
+model:
+  image_encoder: "vit_base_patch16"
+  text_encoder: "MiniLM_L6"
+  embed_dim: 256

@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/xiuxiuli.SSNC-CORP/Desktop/learn/contrastive-learning/mlruns/665821090213739334/f0b703384e5c4837b37d6ff16742ee97/artifacts
+end_time: 1761170871721
+entry_point_name: ''
+experiment_id: '665821090213739334'
+lifecycle_stage: active
+run_id: f0b703384e5c4837b37d6ff16742ee97
+run_name: dinov2
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761170773548
+status: 3
+tags: []
+user_id: xiuxiuli

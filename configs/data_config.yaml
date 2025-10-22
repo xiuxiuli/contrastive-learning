@@ -1,0 +1,16 @@
+sampling:
+  seed: 234
+
+dataset:
+  name: "ilee0022/ImageNet100"
+  output_subdir: "data/raw"
+  splits:
+    train: "train"
+    val: "validation"
+    test: "test"
+  sizes:
+    train: null
+    val: null
+    test: null
+
+   

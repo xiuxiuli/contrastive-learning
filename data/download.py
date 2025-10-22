@@ -1,30 +1,33 @@
-import os
-import torchvision
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from utils import tool
 from datasets import load_dataset
 
-def get_datasets(cfg):
+def download(cfg):
     
-    subCfg = cfg["dataset"]
-    setname = subCfg["name"]
+    data_cfg = cfg["dataset"]
+    data_name = data_cfg["name"]
 
     # destination
-    output_dir, output_path = tool.get_dir_path(cfg, subCfg)
+    root_dir = tool.get_root_dir(cfg)
+    output_dir = os.path.join(root_dir, data_cfg["output_subdir"])
+    os.makedirs(output_dir, exist_ok=True)
 
-    dataset = load_dataset(setname , cache_dir=output_dir)
+    data = load_dataset(data_name, cache_dir=output_dir)
 
-    trainset = sample_dataset(dataset[subCfg["train_split"]],
-                                subCfg.get("train_size"),
-                                cfg["sampling"]["seed"])
-    
-    valset = sample_dataset(dataset[subCfg["val_split"]],
-                            subCfg.get("val_size"),
-                            cfg["sampling"]["seed"])
-        
-    print(f"[INFO] {setname} dataset ready at {output_dir}")
-    print(f"[INFO] Train size: {len(trainset)}, Val size: {len(valset)}")
+    splits = data_cfg["splits"]
+    sizes = data_cfg["sizes"]
+    seed =  cfg["sampling"]["seed"]
 
-    return trainset, valset
+    trainset = sample_dataset(data[splits["train"]], sizes["train"], seed)
+    valset = sample_dataset(data[splits["val"]], sizes["val"], seed)
+    testset = sample_dataset(data[splits["test"]], sizes["test"], seed)
+   
+    print(f"[INFO] {data_name} downloaded and cached to {output_dir}")
+    print(f"[INFO] Train: {len(trainset)}, Val: {len(valset)}, Test: {len(testset)}")
+
+    return trainset, valset, testset
 
 # Hugging Face, select a subset
 def sample_dataset(dataset, size, seed=42):
@@ -34,7 +37,7 @@ def sample_dataset(dataset, size, seed=42):
 
 if __name__ == "__main__":
     # load config
-    cfg = tool.load_yaml('./config/data_config.yaml')
+    cfg = tool.load_yaml('./config/data_config.yaml', True)
 
     # download data
-    get_datasets(cfg)
+    download(cfg)
