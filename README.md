@@ -88,26 +88,15 @@ Artifacts (checkpoints, logs)
 
 Run status (FINISHED / FAILED)
 
+
 📊 MLflow UI
 
 To visualize all experiments:
 
 mlflow ui
 
-
 Then open: http://127.0.0.1:5000
 
-🧩 Keywords for Recruiters
-
-#MLOps • #Hydra • #MLflow • #PyTorchLightning • #SelfSupervisedLearning
-#ContrastiveLearning • #DINOv2 • #CLIP • #VisionTransformer • #Reproducibility
-#ExperimentTracking • #YAMLConfig • #DataPipeline • #ImageNet100
-
-👤 Author
-
-Xiuxiu Li
-💼 Senior Software Engineer 
-🎓 M.S. in Computer Science, University of Southern California (USC)
 
 🧠 Summary
 
