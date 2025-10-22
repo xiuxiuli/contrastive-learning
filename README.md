@@ -1,36 +1,115 @@
-# 🚀 Contrastive Learning Project Plan
+🧩 Contrastive Learning MLOps Pipeline - IN PROGRESS
 
-## 1. Objectives
+End-to-End Multi-Stage Self-Supervised Learning Pipeline built with Hydra, MLflow, and PyTorch Lightning.
+Designed for modular experimentation, reproducibility, and scalable model development.
 
-* Implement and train a contrastive learning encoder (SimCLR baseline) on **ImageNet-100**.
-* Extend to **mini-CLIP** (aligning image ↔ text embeddings, supporting zero-shot classification).
-* Build a **retrieval system demo** (Faiss + Streamlit, supporting image-to-image and text-to-image search).
-* Conduct **ablation studies & visualization** (augmentation strategies, temperature scaling, queue size).
+🚀 Overview
 
----
+This project implements a multi-stage visual contrastive learning pipeline, integrating state-of-the-art self-supervised learning (SSL) techniques such as DINOv2, Linear Probe evaluation, and multi-modal CLIP-style alignment.
+The architecture follows modern MLOps best practices, combining Hydra configuration management, MLflow experiment tracking, and PyTorch Lightning for modular and reproducible deep learning workflows.
 
-## 2. Development Phases & Core Tasks
+🧠 Pipeline Stages
+Stage	Description	Output
+Stage 1 — DINOv2 Pretraining	Self-supervised representation learning on ImageNet-100.	Vision backbone with strong features.
+Stage 2 — Linear Probe	Train a linear classifier on frozen DINOv2 embeddings to measure representation quality.	Linear evaluation accuracy.
+Stage 3 — CLIP Training	Multi-modal contrastive alignment between image and text features.	Unified vision-language embedding space.
+Stage 4 — Demo / Retrieval	Launch retrieval demo for visual-semantic search.	End-to-end inference pipeline.
 
-| Phase                                | Timeline (Est.) | Core Tasks                                                                                                                                                       | Models / Methods                                   |
-| ------------------------------------ | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| **Phase 1: Setup**                   | Week 1–2        | - Project initialization (code structure, configs)<br>- Data loading (ImageNet-100)<br>- Implement data augmentation pipeline (crop, color jitter, blur, flip)   | `torchvision.transforms`, DataLoader               |
-| **Phase 2: Baseline**                | Week 3–4        | - Implement SimCLR model (ResNet-50 encoder + MLP head)<br>- Train & evaluate with linear probe                                                                  | ResNet-50, NT-Xent loss                            |
-| **Phase 3: Multimodal Extension**    | Week 5–6        | - Add text encoder (MiniLM / DistilBERT)<br>- Train mini-CLIP (image embeddings ↔ class text embeddings)<br>- Test zero-shot classification                      | SimCLR encoder + MiniLM encoder + Contrastive loss |
-| **Phase 4: Retrieval Application**   | Week 7          | - Build embedding index with Faiss<br>- Implement image-to-image and text-to-image retrieval<br>- Deploy Streamlit demo                                          | Faiss, Streamlit                                   |
-| **Phase 5: Expansion & Analysis**    | Week 8–9        | - Ablation studies (augmentation combinations, temperature, queue size)<br>- Robustness evaluation (noise, blur)<br>- Visualization of embeddings (t-SNE / UMAP) | Ablation configs, sklearn.manifold (t-SNE), UMAP   |
-| **Phase 6: Finalization & Delivery** | Week 10         | - Summarize results & visualizations<br>- Write technical report<br>- Extract résumé highlights<br>- Release codebase & demo                                     | Markdown report, GitHub repo                       |
+Each stage runs independently and can be resumed, skipped, or reconfigured dynamically through the unified Hydra + MLflow system.
 
----
+⚙️ Technical Stack
+Category	Technologies
+Core Framework	PyTorch • PyTorch Lightning • torchvision
+Experiment Management	Hydra • MLflow • YAML-based config groups
+Architecture	DINOv2 • Linear Probe • CLIP
+Data Handling	Hugging Face Datasets (ImageNet-100)
+Pipeline Control	Hydra Compose + Dynamic Overrides
+MLOps	MLflow Tracking Server • Artifact logging • Stage-level skip via MLflow run state
+Utilities	tqdm • omegaconf • pyyaml • pathlib
+🧩 Features
 
-## 3. Models & Methods Summary
+🔄 Multi-Stage Pipeline — DINOv2 → Linear Probe → CLIP → Demo
 
-* **Encoder**: ResNet-50 (`torchvision.models`)
-* **Projection Head**: 2-layer MLP (hidden=2048, output=128)
-* **Loss Functions**: NT-Xent (SimCLR), InfoNCE (for CLIP alignment)
-* **Text Encoders**: MiniLM / DistilBERT (HuggingFace Transformers)
-* **Retrieval Tools**: Faiss (IndexFlatIP / HNSW)
-* **Visualization**: t-SNE, UMAP, matplotlib / seaborn
-* **Demo Framework**: Streamlit WebApp
+⚙️ Hydra Configuration System — dynamic config composition & inheritance
 
----
+📊 MLflow Integration — full tracking of parameters, metrics, and artifacts
 
+🧠 Idempotent Stage Execution — skip completed stages using MLflow run status
+
+🧩 Lightning Training Framework — clean modular structure and reproducibility
+
+☁️ Scalable & Extensible — ready for multi-GPU, Colab, or cloud training
+
+🧭 Project Structure
+contrastive-learning/
+│
+├── main.py                    # Hydra + MLflow pipeline controller
+├── configs/
+│   ├── config.yaml             # Global pipeline configuration
+│   └── stages/
+│       ├── dinov2.yaml
+│       ├── linear_probe.yaml
+│       ├── clip.yaml
+│       └── demo.yaml
+│
+├── train/
+│   ├── train_dinov2.py
+│   ├── train_linear_probe.py
+│   ├── train_clip.py
+│   └── train_demo.py
+│
+├── utils/
+│   └── tool.py
+└── requirements.txt
+
+🧮 Example Run
+# Run full pipeline
+python main.py
+
+# Or run only one stage
+python main.py stages=clip
+
+# Override parameters dynamically
+python main.py stages=dinov2 train.epochs=50 train.batch_size=128
+
+
+Hydra automatically saves merged configs under:
+
+outputs/<timestamp>/.hydra/config.yaml
+
+
+MLflow automatically logs:
+
+Parameters (epochs, lr, batch_size)
+
+Metrics (loss, accuracy)
+
+Artifacts (checkpoints, logs)
+
+Run status (FINISHED / FAILED)
+
+📊 MLflow UI
+
+To visualize all experiments:
+
+mlflow ui
+
+
+Then open: http://127.0.0.1:5000
+
+🧩 Keywords for Recruiters
+
+#MLOps • #Hydra • #MLflow • #PyTorchLightning • #SelfSupervisedLearning
+#ContrastiveLearning • #DINOv2 • #CLIP • #VisionTransformer • #Reproducibility
+#ExperimentTracking • #YAMLConfig • #DataPipeline • #ImageNet100
+
+👤 Author
+
+Xiuxiu Li
+💼 Senior Software Engineer 
+🎓 M.S. in Computer Science, University of Southern California (USC)
+
+🧠 Summary
+
+This project demonstrates how a modern machine learning engineer can architect a scalable, modular, and fully reproducible deep learning pipeline,
+unifying model development and MLOps practices — from configuration and training, to logging, evaluation, and deployment.
