@@ -13,4 +13,10 @@ dataset:
     val: null
     test: null
 
+clean:
+  name: "ilee0022/ImageNet100"
+  cache_dir: "data/raw/ilee0022___image_net100/default/0.0.0/c55b2f2967c034db17be30f7d430e41c80fd4281"
+  save_dir: "data/processed"
+  
+  
    

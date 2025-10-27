@@ -1,15 +1,14 @@
-defaults:
-  - _self_
-
 globals:
-  root:
-    local: "./"
-    colab: "/content/drive/MyDrive/Repo_contrastive_learning"
+  # root:
+  #   local: "./"
+  #   colab: "/content/drive/MyDrive/Repo_contrastive_learning"
+  env: null
 
   log:
     use_mlflow: true
-    tracking_uri: "file:./mlruns"
-    experiment_name: "contrastive_learning_exps"
+    tracking_uri: "file:/mlruns"
+    experiment_name: "contrastive_learning_exp"
+    skip_finished_stages: true
 
 stages:
   - name: dinov2

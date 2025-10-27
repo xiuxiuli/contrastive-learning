@@ -60,3 +60,11 @@ Colab_Notebooks/
 *.log
 *.bak
 *.tmp
+
+
+mlruns/
+outputs/
+runs/
+experiments/
+data/raw/
+__pycache__/
