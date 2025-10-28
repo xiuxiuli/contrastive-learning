@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision.models import vit_b_16
+import timm
 
 
 class DINOv2LightningModule(pl.LightningModule):
@@ -14,8 +15,8 @@ class DINOv2LightningModule(pl.LightningModule):
         self.cfg = cfg
 
         # backbone (student/teacher)
-        self.backbone_s, feat_dim = build_backbone(cfg.model.get("backbone", "vit_base_patch16"))
-        self.backbone_t, feat_dim = build_backbone(cfg.model.get("backbone", "vit_base_patch16"))
+        self.backbone_s, feat_dim = build_backbone(cfg.model.get("backbone", "vit_base_patch16_224"))
+        self.backbone_t, feat_dim = build_backbone(cfg.model.get("backbone", "vit_base_patch16_224"))
         for p in self.backbone_t.parameters():
             p.requires_grad=False
         
@@ -227,14 +228,14 @@ class DINOLoss(nn.Module):
 # ---------------------------
 # Backbones
 # ---------------------------
-def build_backbone(name: str):
-    name = (name or "vit_base_patch16").lower()
-    if "vit" in name:
-        m = vit_b_16(weights=None)
-        feat_dim = 768 # torchvision vit_b_16 classifier out
-        return m, feat_dim
-    else:
-        # fallback
-        m = vit_b_16(weights=None)
-        return m, 768
+def build_backbone(name: str = "vit_base_patch16_224"):
+    """
+    构建支持任意输入分辨率的 Vision Transformer backbone
+    使用 timm 实现，避免 torchvision 的 224x224 限制。
+    """
+    m = timm.create_model(name, pretrained=False)
+
+    feat_dim = getattr(m, "embed_dim",768)
+    
+    return m, feat_dim
     
