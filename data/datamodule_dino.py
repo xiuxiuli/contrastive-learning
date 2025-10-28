@@ -142,7 +142,7 @@ class ImageNet100DinoDataModule(pl.LightningDataModule):
             self.trainset,
             batch_size=self.train_cfg.get("batch_size", 256),
             shuffle=True,
-            num_workers=4,
+            num_workers=2,
             pin_memory=True,
             collate_fn=self.collate_mc
         )
@@ -152,7 +152,7 @@ class ImageNet100DinoDataModule(pl.LightningDataModule):
             self.valset,
             batch_size=self.train_cfg.get("batch_size", 256),
             shuffle=False,
-            num_workers=4,
+            num_workers=2,
             pin_memory=True,
         )
 
