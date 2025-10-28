@@ -14,10 +14,12 @@ def run(cfg):
     seed_everything(cfg.train.seed)
 
     log_cfg = cfg.globals.log
+    train_cfg = cfg.train
+
     experiment_name = log_cfg.experiment_name
     tracking_uri = log_cfg.tracking_uri
 
-    save_dir = Path(cfg.train.get("save_dir", "runs/dinov2_exp1"))
+    save_dir = Path(train_cfg.save_dir)
     os.makedirs(save_dir, exist_ok=True)
 
     # ---- MLflow logger
@@ -35,7 +37,7 @@ def run(cfg):
     lr_cb = LearningRateMonitor(logging_interval="epoch")
 
     # Data + Model
-    dm = ImageNet100DinoDataModule(cfg.data, cfg.train)
+    dm = ImageNet100DinoDataModule(cfg.data, train_cfg)
     dm.setup()
     model = DINOv2LightningModule(cfg)
 
@@ -43,14 +45,17 @@ def run(cfg):
     trainer = Trainer(
         accelerator="auto",
         devices="auto",
-        max_epochs=cfg.train.get("epochs",64),
-        accumulate_grad_batches = cfg.train.get("accumulate_grad_batches"),
-        precision=cfg.train.get("precision"),
+        max_epochs=train_cfg.epochs,
+        accumulate_grad_batches = train_cfg.accumulate_grad_batches,
+        precision=train_cfg.precision,
         logger=mlf_logger,
         callbacks=[ckpt_cb, lr_cb],
         log_every_n_steps=20,
         default_root_dir=save_dir,
-
+        gradient_clip_val=train_cfg.gradient_clip_val,
+        deterministic=True,
+        benchmark=False,
+        fast_dev_run=False,
     )
 
     # Auto Resume

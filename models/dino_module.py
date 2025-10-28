@@ -16,14 +16,14 @@ class DINOv2LightningModule(pl.LightningModule):
         self.cfg = cfg
 
         # backbone (student/teacher)
-        self.backbone_s, feat_dim = build_backbone(cfg.model.get("backbone", "vit_base_patch16_224"))
-        self.backbone_t, feat_dim = build_backbone(cfg.model.get("backbone", "vit_base_patch16_224"))
+        self.backbone_s, feat_dim = build_backbone(cfg.model.backbone)
+        self.backbone_t, feat_dim = build_backbone(cfg.model.backbone)
         for p in self.backbone_t.parameters():
             p.requires_grad=False
         
         # heads (student/teacher)
-        proj_dim = cfg.model.get("projection_dim", 256)
-        hidden_dim = cfg.model.get("hidden_dim", 4096)
+        proj_dim = cfg.model.projection_dim
+        hidden_dim = cfg.model.hidden_dim
         self.head_s = MLPHead(feat_dim, hidden_dim=hidden_dim, out_dim=proj_dim)
         self.head_t = MLPHead(feat_dim, hidden_dim=hidden_dim, out_dim=proj_dim)
         for p in self.head_t.parameters():
@@ -32,19 +32,19 @@ class DINOv2LightningModule(pl.LightningModule):
         # loss
         self.loss_fn = DINOLoss(
             out_dim=proj_dim,
-            warmup_teacher_temp=cfg.model.get("temperature_teacher", 0.04),
-            teacher_temp=cfg.model.get("temperature_teacher", 0.04),
-            warmup_steps=int(cfg.train.get("warmup_epochs", 10) * 1000),  # 粗略按步数近似
-            total_steps=int(cfg.train.get("epochs", 100) * 1000),
-            center_momentum=cfg.model.get("center_momentum", 0.9),
+            warmup_teacher_temp=cfg.model.temperature_teacher,
+            teacher_temp=cfg.model.temperature_teacher,
+            warmup_steps=int(cfg.train.warmup_epochs * 1000),  # 粗略按步数近似
+            total_steps=int(cfg.train.warmup_epochs* 1000),
+            center_momentum=cfg.model.center_momentum,
         )
 
-        self.base_lr = cfg.train.get("learning_rate", 0.0003)
-        self.weight_decay = cfg.train.get("weight_decay", 0.0001)
-        self.momentum_teacher_start = cfg.train.get("momentum_teacher", 0.996)
+        self.base_lr = cfg.train.learning_rate
+        self.weight_decay = cfg.train.weight_decay
+        self.momentum_teacher_start = cfg.train.momentum_teacher
 
         # log
-        self.example_input_array = torch.randn(2, 3, cfg.data.get("image_size", 224), cfg.data.get("image_size", 224))
+        self.example_input_array = torch.randn(2, 3, cfg.data.global_size, cfg.data.global_size)
     
     def forward_backbone(self, model, x):
         """
@@ -140,7 +140,7 @@ class DINOv2LightningModule(pl.LightningModule):
     def configure_optimizers(self):
         opt = torch.optim.AdamW(self.parameters(), lr=self.base_lr, weight_decay=self.weight_decay)
         # cosine schedule with warmup (per epoch stepping OK for simplicity)
-        sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=self.cfg.train.get("epochs", 100))
+        sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=self.cfg.train.epochs)
         return {"optimizer": opt, "lr_scheduler": {"scheduler": sched, "interval": "epoch"}}
 
     def forward(self, x):
@@ -270,7 +270,7 @@ class DINOLoss(nn.Module):
 # ---------------------------
 # Backbones
 # ---------------------------
-def build_backbone(name: str = "vit_base_patch16_224"):
+def build_backbone(name: str):
     """
     change to TIMM, Vision Transformer backbone
     make 96X96 and 224X224 both are acceptable 
