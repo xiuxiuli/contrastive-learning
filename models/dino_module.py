@@ -6,6 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision.models import vit_b_16
 import timm
+from timm.models.vision_transformer import resize_pos_embed
 
 
 class DINOv2LightningModule(pl.LightningModule):
@@ -46,26 +47,52 @@ class DINOv2LightningModule(pl.LightningModule):
         self.example_input_array = torch.randn(2, 3, cfg.data.get("image_size", 224), cfg.data.get("image_size", 224))
     
     def forward_backbone(self, model, x):
-        feats = model.forward_features(x)      
+        """
+        让 timm ViT 支持 multi-crop (224 / 96)：
+        1) 关闭 strict_img_size
+        2) 根据当前输入 HxW 动态插值 pos_embed
+        3) 再调用 forward_features，返回 CLS 向量
+        """
+        B, C, H, W = x.shape
+        assert hasattr(model, "patch_embed"), "Backbone missing patch_embed"
+        patch = model.patch_embed.patch_size if hasattr(model.patch_embed, "patch_size") else (16, 16)
+        ph, pw = (patch if isinstance(patch, tuple) else (patch, patch))
 
+        # 计算当前 grid size（和 token 数）
+        gh, gw = H // ph, W // pw
+        cur_tokens = gh * gw
+        num_prefix = getattr(model, "num_prefix_tokens", 1)  # ViT 通常=1 (CLS)
+
+        # 如果有 pos_embed 且 token 数不匹配 -> 动态插值到当前 grid
+        if hasattr(model, "pos_embed") and isinstance(model.pos_embed, nn.Parameter):
+            pe = model.pos_embed              # [1, 1 + N, D]
+            base_tokens = pe.shape[1] - num_prefix
+            need_resize = (base_tokens != cur_tokens)
+            # 只在需要时插值一次，避免每步反复插值带来开销
+            if need_resize:
+                with torch.no_grad():
+                    # resize_pos_embed 接受 (gh, gw) 二元组和前缀 token 数
+                    new_pe = resize_pos_embed(pe, (gh, gw), num_prefix_tokens=num_prefix)
+                # 临时替换为当前尺寸的 pos_embed（训练从零起步，无需保持 224 版本）
+                model.pos_embed = nn.Parameter(new_pe)
+
+        # 走标准的 timm 特征提取
+        feats = model.forward_features(x)
+
+        # timm 有些模型返回 dict
         if isinstance(feats, dict):
-            # 通常 key 可能是 "x", "last_hidden_state", 或 "features"
-            for key in ["x", "last_hidden_state", "features"]:
-                if key in feats:
-                    feats = feats[key]
+            for k in ["x", "last_hidden_state", "features"]:
+                if k in feats:
+                    feats = feats[k]
                     break
 
-        # 兜底检查：确保 feats 是 Tensor
         if not isinstance(feats, torch.Tensor):
-            raise ValueError(f"Unexpected output type from backbone: {type(feats)}")
+            raise ValueError(f"Unexpected features type: {type(feats)}")
 
-        # feats 形状一般是 (B, N, D)，其中 N=patch数+1 (CLS token)
+        # 返回 CLS（等价于你之前的 feats[:, 0]）
         if feats.dim() == 3:
-            # 取 CLS token 特征 (第0个位置)
-            cls_feat = feats[:, 0]
-            return cls_feat
+            return feats[:, 0]
         elif feats.dim() == 2:
-            # 已经是 CLS token 形式
             return feats
         else:
             raise ValueError(f"Unexpected feature shape: {feats.shape}")
@@ -247,10 +274,14 @@ class DINOLoss(nn.Module):
 # ---------------------------
 def build_backbone(name: str = "vit_base_patch16_224"):
     """
-    构建支持任意输入分辨率的 Vision Transformer backbone
-    使用 timm 实现，避免 torchvision 的 224x224 限制。
+    change to TIMM, Vision Transformer backbone
+    make 96X96 and 224X224 both are acceptable 
     """
     m = timm.create_model(name, pretrained=False)
+
+    # accept dynamic image size
+    if hasattr(m, "patch_embed") and hasattr(m.patch_embed, "strict_img_size"):
+        m.patch_embed.strict_img_size = False
 
     feat_dim = getattr(m, "embed_dim",768)
     
