@@ -46,12 +46,29 @@ class DINOv2LightningModule(pl.LightningModule):
         self.example_input_array = torch.randn(2, 3, cfg.data.get("image_size", 224), cfg.data.get("image_size", 224))
     
     def forward_backbone(self, model, x):
-        feats = model._process_input(x)        # patch embedding
-        B = feats.shape[0]
-        cls_token = model.class_token.expand(B, -1, -1)
-        feats = torch.cat([cls_token, feats], dim=1)
-        feats = model.encoder(feats)           # Transformer encoder
-        return feats[:, 0]                     # 取 CLS token 作为视觉特征
+        feats = model.forward_features(x)      
+
+        if isinstance(feats, dict):
+            # 通常 key 可能是 "x", "last_hidden_state", 或 "features"
+            for key in ["x", "last_hidden_state", "features"]:
+                if key in feats:
+                    feats = feats[key]
+                    break
+
+        # 兜底检查：确保 feats 是 Tensor
+        if not isinstance(feats, torch.Tensor):
+            raise ValueError(f"Unexpected output type from backbone: {type(feats)}")
+
+        # feats 形状一般是 (B, N, D)，其中 N=patch数+1 (CLS token)
+        if feats.dim() == 3:
+            # 取 CLS token 特征 (第0个位置)
+            cls_feat = feats[:, 0]
+            return cls_feat
+        elif feats.dim() == 2:
+            # 已经是 CLS token 形式
+            return feats
+        else:
+            raise ValueError(f"Unexpected feature shape: {feats.shape}")
     
     @torch.no_grad()
     def _update_teacher(self, m):
