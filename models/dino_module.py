@@ -231,10 +231,10 @@ def build_backbone(name: str):
     name = (name or "vit_base_patch16").lower()
     if "vit" in name:
         m = vit_b_16(weights=None)
-        feat_dim = 1000 # torchvision vit_b_16 classifier out
+        feat_dim = 768 # torchvision vit_b_16 classifier out
         return m, feat_dim
     else:
         # fallback
         m = vit_b_16(weights=None)
-        return m, 1000
+        return m, 768
     
