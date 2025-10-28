@@ -86,7 +86,12 @@ class HFDatasetWrapper(Dataset):
         item = self.dataset[idx]
 
         # HuggingFace dataset 存的是字节流
-        image = Image.open(io.BytesIO(item["image"]["bytes"])).convert("RGB")
+        img_data = item["image"]
+        if isinstance(img_data, dict) and "bytes" in img_data:
+            image = Image.open(io.BytesIO(img_data["bytes"])).convert("RGB")
+        else:
+            image = img_data.convert("RGB")
+            
         if self.transform:
             image = self.transform(image)
         label=item.get("label", -1)
