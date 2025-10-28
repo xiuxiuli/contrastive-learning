@@ -21,7 +21,7 @@ def download(cfg):
 
     data = load_dataset(data_name, cache_dir=output_dir)
 
-    splits = data_cfg.split
+    splits = data_cfg.splits
     sizes = data_cfg.sizes
     seed =  cfg.sampling.seed
 
