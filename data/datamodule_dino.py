@@ -47,25 +47,24 @@ class MultiCropTransform:
 
         # global views
         self.global_transform = T.Compose([
-            T.RandomResizedCrop(global_size, scale=(0.4, 0.1)),
-            T.RandomHorizontalFlip(),
-            T.ColorJitter(brightness=color_jitter, contrast=color_jitter, saturation=color_jitter, hue=0.2),
-            T.RandomGrayscale(p=gray_p),
-            T.GaussianBlur(kernel_size=23, sigma=(0.1, 2.0)),
+            T.RandomResizedCrop(global_size, scale=(0.4, 1.0), ratio=(0.75, 1.33)),
+            T.RandomHorizontalFlip(p=0.5),
+            T.ColorJitter(0.4, 0.4, 0.4, 0.1),
+            T.RandomGrayscale(p=0.2),
+            T.GaussianBlur(kernel_size=int(0.1 * global_size)),
             T.ToTensor(),
-            normalize,
+            T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
 
         # local views
         self.local_transform = T.Compose([
-            T.RandomResizedCrop(local_size, scale=(0.05, 0.4)),
-            T.RandomHorizontalFlip(),
-            T.ColorJitter(brightness=color_jitter, contrast=color_jitter,
-                          saturation=color_jitter, hue=0.2),
-            T.RandomGrayscale(p=gray_p),
-            T.GaussianBlur(kernel_size=9, sigma=(0.1, 2.0)),
+            T.RandomResizedCrop(local_size, scale=(0.05, 0.4), ratio=(0.75, 1.33)),
+            T.RandomHorizontalFlip(p=0.5),
+            T.ColorJitter(0.4, 0.4, 0.4, 0.1),
+            T.RandomGrayscale(p=0.2),
+            T.GaussianBlur(kernel_size=int(0.1 * local_size)),
             T.ToTensor(),
-            normalize,
+            T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
         self.n_global, self.n_local = n_global, n_local
     
@@ -91,7 +90,7 @@ class HFDatasetWrapper(Dataset):
             image = Image.open(io.BytesIO(img_data["bytes"])).convert("RGB")
         else:
             image = img_data.convert("RGB")
-            
+
         if self.transform:
             image = self.transform(image)
         label=item.get("label", -1)
