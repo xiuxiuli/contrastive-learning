@@ -7,6 +7,7 @@ from datasets import load_from_disk
 from PIL import Image
 
 import pytorch_lightning as pl
+from pathlib import Path
 
 # datamodule_dino.py
 
@@ -119,6 +120,8 @@ class ImageNet100DinoDataModule(pl.LightningDataModule):
     def setup(self, stage=None):
         root=self.data_cfg.get("cache_dir")
         dataset = load_from_disk(root)
+        # base = Path(self.data_cfg.get("cache_dir"))  # e.g. data/processed
+        # 情况 A：一次性保存的 DatasetDict（根目录下有 dataset_dict.json）
 
         self.trainset = HFDatasetWrapper(dataset["train"], transform=self.mc)
         self.valset = HFDatasetWrapper(dataset["validation"], transform=self.eval_tr)

@@ -100,6 +100,12 @@ class DINOv2LightningModule(pl.LightningModule):
         sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=self.cfg.train.get("epochs", 100))
         return {"optimizer": opt, "lr_scheduler": {"scheduler": sched, "interval": "epoch"}}
 
+    def forward(self, x):
+        # 用 student backbone + head 做一次完整的前向传播
+        z = self.forward_backbone(self.backbone_s, x)
+        out = self.head_s(z)
+        return out
+    
 # ---------------------------
 # Projection Head
 # --------------------------- 
