@@ -10,8 +10,8 @@ train:
   momentum_teacher: 0.996
   warmup_epochs: 10
   save_dir: "runs/dinov2_exp1"
-  accumulate_grad_batches = 2   # 可选梯度累积
-  precision="16-mixed"
+  accumulate_grad_batches: 2   # 可选梯度累积
+  precision: "16-mixed"
   resume_from_checkpoint: null
 
 
