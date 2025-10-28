@@ -95,11 +95,13 @@ class DINOv2LightningModule(pl.LightningModule):
     
     @torch.no_grad()
     def _update_teacher(self, m):
-        # EMA for teacher (cosine schedule from m0 -> 1.0)
+        # EMA update only for same-shaped params
         for ps, pt in zip(self.backbone_s.parameters(), self.backbone_t.parameters()):
-            pt.data.mul_(m).add_(ps.data, alpha=(1.0 - m))
+            if ps.data.shape == pt.data.shape:
+                pt.data.mul_(m).add_(ps.data, alpha=(1.0 - m))
         for ps, pt in zip(self.head_s.parameters(), self.head_t.parameters()):
-            pt.data.mul_(m).add_(ps.data, alpha=(1.0 - m))
+            if ps.data.shape == pt.data.shape:
+                pt.data.mul_(m).add_(ps.data, alpha=(1.0 - m))
 
     def _teacher_momentum(self):
         # cosine schedule (m_t) from m0 to 1
