@@ -62,7 +62,7 @@ class MultiCropTransform:
             T.RandomHorizontalFlip(p=0.5),
             T.ColorJitter(0.4, 0.4, 0.4, 0.1),
             T.RandomGrayscale(p=0.2),
-            T.GaussianBlur(kernel_size=(int(0.1 * global_size) // 2 * 2 + 1)),
+            T.GaussianBlur(kernel_size=(int(0.1 * local_size) // 2 * 2 + 1)),
             T.ToTensor(),
             T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
@@ -107,16 +107,16 @@ class ImageNet100DinoDataModule(pl.LightningDataModule):
         self.train_cfg = train_cfg
 
         self.mc = MultiCropTransform(
-            global_size=data_cfg.get("image_size", 224),
-            local_size=96,
-            n_global=2,
-            n_local=6
+            global_size=data_cfg.global_size,
+            local_size=data_cfg.local_size,
+            n_global=data_cfg.n_global,
+            n_local=data_cfg.n_local
         )
 
         # eval transform (no heavy augmentation)
         self.eval_tr = T.Compose([
-            T.Resize(int(1.14 * data_cfg.get("image_size", 224))),
-            T.CenterCrop(data_cfg.get("image_size", 224)),
+            T.Resize(int(1.14 * data_cfg.global_size)),
+            T.CenterCrop(data_cfg.global_size),
             T.ToTensor(),
             T.Normalize(mean=[0.485,0.456,0.406], std=[0.229,0.224,0.225]),
         ])

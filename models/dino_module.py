@@ -274,6 +274,7 @@ def build_backbone(name: str = "vit_base_patch16_224"):
     make 96X96 and 224X224 both are acceptable 
     """
     m = timm.create_model(name, pretrained=False)
+    m.set_grad_checkpointing(True)
 
     # accept dynamic image size
     if hasattr(m, "patch_embed") and hasattr(m.patch_embed, "strict_img_size"):
