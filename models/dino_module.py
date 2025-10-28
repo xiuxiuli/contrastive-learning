@@ -48,33 +48,29 @@ class DINOv2LightningModule(pl.LightningModule):
     
     def forward_backbone(self, model, x):
         """
-        让 timm ViT 支持 multi-crop (224 / 96)：
-        1) 关闭 strict_img_size
-        2) 根据当前输入 HxW 动态插值 pos_embed
-        3) 再调用 forward_features，返回 CLS 向量
+        兼容 timm ViT 的 forward_backbone，支持 multi-crop 输入 (224 / 96)
         """
         B, C, H, W = x.shape
-        assert hasattr(model, "patch_embed"), "Backbone missing patch_embed"
-        patch = model.patch_embed.patch_size if hasattr(model.patch_embed, "patch_size") else (16, 16)
+        patch = model.patch_embed.patch_size
         ph, pw = (patch if isinstance(patch, tuple) else (patch, patch))
-
-        # 计算当前 grid size（和 token 数）
         gh, gw = H // ph, W // pw
         cur_tokens = gh * gw
-        num_prefix = getattr(model, "num_prefix_tokens", 1)  # ViT 通常=1 (CLS)
+        num_prefix = getattr(model, "num_prefix_tokens", 1)
 
-        # 如果有 pos_embed 且 token 数不匹配 -> 动态插值到当前 grid
+        # 确保 strict_img_size=False
+        if hasattr(model.patch_embed, "strict_img_size"):
+            model.patch_embed.strict_img_size = False
+
+        # 调整 pos_embed
         if hasattr(model, "pos_embed") and isinstance(model.pos_embed, nn.Parameter):
-            pe = model.pos_embed              # [1, 1 + N, D]
+            pe = model.pos_embed
             base_tokens = pe.shape[1] - num_prefix
-            need_resize = (base_tokens != cur_tokens)
-            # 只在需要时插值一次，避免每步反复插值带来开销
-            if need_resize:
+            if base_tokens != cur_tokens:
                 with torch.no_grad():
-                    # resize_pos_embed 接受 (gh, gw) 二元组和前缀 token 数
-                    new_pe = resize_pos_embed(pe, (gh, gw), num_prefix_tokens=num_prefix)
-                # 临时替换为当前尺寸的 pos_embed（训练从零起步，无需保持 224 版本）
-                model.pos_embed = nn.Parameter(new_pe)
+                    # 生成一个假 token tensor 作为目标 shape
+                    dummy = torch.zeros(1, num_prefix + cur_tokens, pe.shape[-1])
+                    new_pe = resize_pos_embed(pe, dummy, num_prefix_tokens=num_prefix)
+                    model.pos_embed = nn.Parameter(new_pe)
 
         # 走标准的 timm 特征提取
         feats = model.forward_features(x)
