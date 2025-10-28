@@ -4,13 +4,16 @@ description: "1 - Self-supervised visual representation learning on ImageNet-100
 train:
   seed: 42
   epochs: 100
-  batch_size: 256
+  batch_size: 64
   learning_rate: 0.0003
   weight_decay: 0.0001
   momentum_teacher: 0.996
   warmup_epochs: 10
   save_dir: "runs/dinov2_exp1"
+  accumulate_grad_batches = 2   # 可选梯度累积
+  precision="16-mixed"
   resume_from_checkpoint: null
+
 
 data:
   name: "ilee0022/ImageNet100"

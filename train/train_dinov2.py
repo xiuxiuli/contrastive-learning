@@ -43,12 +43,14 @@ def run(cfg):
     trainer = Trainer(
         accelerator="auto",
         devices="auto",
-        max_epochs=cfg.train.get("epochs", 100),
-        precision="16-mixed",
+        max_epochs=cfg.train.get("epochs",64),
+        accumulate_grad_batches = cfg.train.get("accumulate_grad_batches"),
+        precision=cfg.train.get("precision"),
         logger=mlf_logger,
         callbacks=[ckpt_cb, lr_cb],
         log_every_n_steps=20,
         default_root_dir=save_dir,
+
     )
 
     # Auto Resume

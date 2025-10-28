@@ -37,7 +37,7 @@ class MultiCropTransform:
         global_size=224,
         local_size=96,
         n_global=2,
-        n_local=6,
+        n_local=2,
         color_jitter=0.8,
         gray_p=0.2,
         blur_p_global=1.0,
