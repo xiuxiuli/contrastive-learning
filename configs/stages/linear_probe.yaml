@@ -2,22 +2,26 @@
 description: "2 - Evaluate DINOv2 encoder representations by training a linear classifier on ImageNet-100."
 
 train:
-  epochs: 30
-  batch_size: 256
+  seed: 42
+  epochs: 6
+  batch_size: 64
   learning_rate: 0.001
-  weight_decay: 0.0001
-  freeze_backbone: true
-  num_classes: 100
-  pretrained_encoder: "runs/dinov2_exp1/encoder_student.pt"
+  weight_decay: 0.0005
+  accumulate_grad_batches: 1
+  precision: 32
+  gradient_clip_val: 1.0
+  early_stop_patience: 3
+  early_stop_min_delta: 0.0001
   save_dir: "runs/linear_probe_exp1"
+  log_every_n_steps: 20
 
 data:
   name: "ilee0022/ImageNet100"
-  cache_dir: "data/raw"
-  image_size: 224
-  split_train: "train"
-  split_val: "validation"
+  cache_dir: "data/processed"
+  global_size: 224
 
 model:
-  backbone: "vit_base_patch16"
-  classifier_dim: 1000
+  backbone: "vit_small_patch16_224"
+  num_classes: 100
+  ckpt_path: "runs/dinov2_exp1/dinov2-00-0.000-v1.ckpt" 
+  freeze_backbone: true

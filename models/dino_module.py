@@ -141,6 +141,8 @@ class DINOv2LightningModule(pl.LightningModule):
 
         self.log("train/loss", loss, prog_bar=True, on_step=True, on_epoch=True)
 
+        self.log("train/loss_epoch_smooth", loss.detach(), prog_bar=False, on_epoch=True, sync_dist=True)
+
         # update teacher
         with torch.no_grad():
             m = self._teacher_momentum()
@@ -153,6 +155,11 @@ class DINOv2LightningModule(pl.LightningModule):
             self.trainer.should_stop = True
             # 返回一个干净的标量，防止反向传播崩溃
             return torch.tensor(0.0, requires_grad=True, device=loss.device)
+        
+        if not torch.isfinite(loss):
+            self.log("train/nan_step", self.global_step)
+            print(f"🚨 Non-finite loss at step {self.global_step}, skipping batch.")
+            return torch.tensor(0.0, device=self.device, requires_grad=True)
         
         return loss
 
@@ -172,6 +179,9 @@ class DINOv2LightningModule(pl.LightningModule):
         clip_value = torch.quantile(torch.stack(grads), 0.9).item()
         torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=clip_value)
         self.log("train/grad_clip_value", clip_value, on_step=True, prog_bar=False)
+
+        grad_norm = torch.nn.utils.clip_grad_norm_(self.parameters(), 1.0)
+        self.log("train/grad_norm", grad_norm, on_step=True, prog_bar=False)
     
     def forward(self, x):
         # 用 student backbone + head 做一次完整的前向传播
@@ -190,24 +200,14 @@ class DINOv2LightningModule(pl.LightningModule):
 # --------------------------- 
 class MLPHead(nn.Module):
     """
-    MLPHead (投影头)
-    -----------------
-    作用：
-        将 backbone（如 ViT / ResNet）输出的通用视觉特征，
-        通过多层非线性映射 (MLP) 投射到对比学习的“嵌入空间”中。
-        对比损失（NT-Xent、DINO loss）在这个投影空间里计算。
-
-    示例：
-        MLPHead(in_dim=768, hidden_dim=4096, out_dim=256, num_layers=3)
-        # 输入 768 → 输出 256
-        # 结构: Linear(768→4096) → GELU → BN → Linear(4096→4096) → GELU → BN → Linear(4096→256)
+    Linear → GELU → LayerNorm → Linear → GELU → LayerNorm → Linear → LayerNorm(affine=False)
     """
     def __init__(self, in_dim, hidden_dim=4096, out_dim=256, num_layers=3, last_bn=True):
         super().__init__()
         layers = []
 
-        # dim_list 定义每层的输入输出维度列表
-        # 举例: [768, 4096, 4096, 256]
+        # dim_list : input and output dim of each layer
+        # eg: [768, 4096, 4096, 256]
         # 含义：输入维度 in_dim=768，经过两层 hidden_dim=4096，最后输出到 out_dim=256
 
         # dim_list = [2048] + [4096] * (3 - 1) + [256]
@@ -220,13 +220,13 @@ class MLPHead(nn.Module):
         for i in range(len(dim_list) - 2):
             # Linear → GELU → BatchNorm
             layers += [
-                nn.Linear(dim_list[i], dim_list[i+1]),  # 全连接层，线性变换
+                nn.Linear(dim_list[i], dim_list[i+1], bias=False),  # 全连接层，线性变换
                 nn.GELU(),                                # 激活函数（比 ReLU 更平滑）
-                nn.BatchNorm1d(dim_list[i+1])           # 批归一化，稳定训练
+                nn.LayerNorm(dim_list[i+1], elementwise_affine=False)           # 批归一化，稳定训练
             ]
 
         # 最后一层线性层：hidden_dim → out_dim
-        layers += [nn.Linear(dim_list[-2], dim_list[-1])]
+        layers += [nn.Linear(dim_list[-2], dim_list[-1], bias=False)]
 
         # DINO 原论文建议最后加一个不带 affine 参数的 BatchNorm
         # affine=False 表示不学习 gamma/beta，只做标准化
@@ -280,11 +280,11 @@ class DINOLoss(nn.Module):
 
         # teacher probs (sharpen + center)
         teacher_logits = torch.cat(teacher_out, dim=0) # [B*N_global, dim]
-        teacher_logits = (teacher_logits - self.center)
+        teacher_logits = (teacher_logits - self.center).clamp(-50, 50)
         teacher_prob = F.softmax(teacher_logits / t, dim=-1).detach()
 
         # student logits (for all views)
-        student_logits = torch.cat(student_out, dim=0)  # [B*N_views, dim]
+        student_logits = torch.cat(student_out, dim=0).clamp(-50, 50)  # [B*N_views, dim]
         student_logprob = F.log_softmax(student_logits, dim=-1)
 
         # Cross-entropy between each student view and each teacher view
@@ -296,6 +296,7 @@ class DINOLoss(nn.Module):
         # expand teacher to match student repeats per (view)
         teacher_prob_rep = teacher_prob.repeat(n_views // n_global + (1 if n_views % n_global else 0), 1)[:B * n_views]
         loss = -torch.sum(teacher_prob_rep * student_logprob, dim=-1).mean()
+        loss = loss + 1e-8
 
         # update center
         with torch.no_grad():

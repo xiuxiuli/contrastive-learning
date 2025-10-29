@@ -49,9 +49,9 @@ class MultiCropTransform:
         self.global_transform = T.Compose([
             T.RandomResizedCrop(global_size, scale=(0.4, 1.0), ratio=(0.75, 1.33)),
             T.RandomHorizontalFlip(p=0.5),
-            T.ColorJitter(0.4, 0.4, 0.4, 0.1),
-            T.RandomGrayscale(p=0.2),
-            T.GaussianBlur(kernel_size=(int(0.1 * global_size) // 2 * 2 + 1)),  #ernel size value should be an odd and positive number.
+            T.ColorJitter(0.2, 0.2, 0.2, 0.05),
+            T.RandomGrayscale(p=0.1),
+            T.GaussianBlur(kernel_size=(int(0.1 * global_size) // 2 * 2 + 1), p=0.5),  #ernel size value should be an odd and positive number.
             T.ToTensor(),
             T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
@@ -60,9 +60,9 @@ class MultiCropTransform:
         self.local_transform = T.Compose([
             T.RandomResizedCrop(local_size, scale=(0.08, 0.4), ratio=(0.75, 1.33)),
             T.RandomHorizontalFlip(p=0.5),
-            T.ColorJitter(0.4, 0.4, 0.4, 0.1),
-            T.RandomGrayscale(p=0.2),
-            T.GaussianBlur(kernel_size=(int(0.1 * local_size) // 2 * 2 + 1)),
+            T.ColorJitter(0.2, 0.2, 0.2, 0.05),
+            T.RandomGrayscale(p=0.1),
+            T.GaussianBlur(kernel_size=(int(0.1 * local_size) // 2 * 2 + 1), p=0.5),
             T.ToTensor(),
             T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])

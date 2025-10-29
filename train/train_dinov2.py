@@ -68,6 +68,8 @@ def run(cfg):
         deterministic=True,
         benchmark=False,
         fast_dev_run=False,
+        detect_anomaly=True,
+        gradient_clip_algorithm="value"
     )
 
     # Auto Resume

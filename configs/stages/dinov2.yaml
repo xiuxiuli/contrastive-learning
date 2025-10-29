@@ -3,17 +3,17 @@ description: "1 - Self-supervised visual representation learning on ImageNet-100
 
 train:
   seed: 42
-  epochs: 6
+  epochs: 4
   batch_size: 64
-  learning_rate: 0.0001
-  weight_decay: 0.0001
+  learning_rate: 0.00005
+  weight_decay: 0.04
   momentum_teacher: 0.999
   warmup_epochs: 1
   save_dir: "runs/dinov2_exp1"
   accumulate_grad_batches: 2   # 可选梯度累积
   precision: 32
   # resume_from_checkpoint: null
-  gradient_clip_val: 3.0
+  gradient_clip_val: 1.0
   early_stop_patience: 2
   early_stop_min_delta: 0.0001
 
@@ -23,7 +23,7 @@ data:
   global_size: 224
   local_size: 96
   n_global: 2
-  n_local: 1
+  n_local: 2
 
 model:
   # backbone: "vit_base_patch16_224"
@@ -31,7 +31,7 @@ model:
   projection_dim: 256
   hidden_dim: 2048
   use_teacher: true
-  temperature_student: 0.1
+  temperature_student: 0.2
   temperature_teacher: 0.07
   temperature_teacher_warmup: 0.04
-  center_momentum: 0.9
+  center_momentum: 0.996  # essay 0.996
