@@ -1,4 +1,5 @@
 import os
+import torch
 from pathlib import Path
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.loggers import MLFlowLogger
@@ -9,6 +10,7 @@ from models.dino_module import DINOv2LightningModule
 
 def run(cfg):
     print("🚀 Starting DINOv2 training...")
+    torch.autograd.set_detect_anomaly(True)
     print(cfg.train)
 
     seed_everything(cfg.train.seed)
@@ -53,7 +55,7 @@ def run(cfg):
         callbacks=[ckpt_cb, lr_cb],
         log_every_n_steps=20,
         default_root_dir=save_dir,
-        gradient_clip_val=train_cfg.gradient_clip_val,
+        gradient_clip_val=1.0,
         deterministic=True,
         benchmark=False,
         fast_dev_run=False,

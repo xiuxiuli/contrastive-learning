@@ -126,7 +126,13 @@ class DINOv2LightningModule(pl.LightningModule):
                 zt = self.forward_backbone(self.backbone_t, v)
                 t_out.append(self.head_t(zt))
 
-        loss = self.loss_fn(s_out, t_out)
+        try:
+            loss = self.loss_fn(s_out, t_out)
+        except Exception as e:
+            print(f"❌ Loss computation failed at step {self.global_step}: {e}")
+            self.trainer.should_stop = True
+            return torch.tensor(0.0, requires_grad=True, device=self.device)
+
         self.log("train/loss", loss, prog_bar=True, on_step=True, on_epoch=True)
 
         # update teacher
@@ -134,7 +140,14 @@ class DINOv2LightningModule(pl.LightningModule):
             m = self._teacher_momentum()
             self._update_teacher(m)
             self.log("train/momentum_teacher", m, on_step=True, prog_bar=False)
-
+        
+        # ---- NaN 防护机制 ----
+        if torch.isnan(loss):
+            print(f"🚨 NaN detected at step {self.global_step}, stopping training safely.")
+            self.trainer.should_stop = True
+            # 返回一个干净的标量，防止反向传播崩溃
+            return torch.tensor(0.0, requires_grad=True, device=loss.device)
+        
         return loss
 
     def configure_optimizers(self):
@@ -142,13 +155,23 @@ class DINOv2LightningModule(pl.LightningModule):
         # cosine schedule with warmup (per epoch stepping OK for simplicity)
         sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=self.cfg.train.epochs)
         return {"optimizer": opt, "lr_scheduler": {"scheduler": sched, "interval": "epoch"}}
-
+    
+    def on_after_backward(self):
+        """自适应梯度裁剪，在每次反向传播后执行"""
+        # 过滤掉无梯度参数
+        grads = [p.grad.norm() for p in self.parameters() if p.grad is not None]
+        if len(grads) == 0:
+            return
+        # 计算 90% 分位梯度范数
+        clip_value = torch.quantile(torch.stack(grads), 0.9).item()
+        torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=clip_value)
+        self.log("train/grad_clip_value", clip_value, on_step=True, prog_bar=False)
+    
     def forward(self, x):
         # 用 student backbone + head 做一次完整的前向传播
         z = self.forward_backbone(self.backbone_s, x)
         out = self.head_s(z)
         return out
-    
 # ---------------------------
 # Projection Head
 # --------------------------- 

@@ -20,7 +20,7 @@ data:
   name: "ilee0022/ImageNet100"
   cache_dir: "data/processed"
   global_size: 224
-  local_size: 124
+  local_size: 96
   n_global: 2
   n_local: 1
 
