@@ -73,8 +73,8 @@ def run(cfg):
         ckpt_path = None
 
     # fit
-    # trainer.fit(model, datamodule=dm, ckpt_path=ckpt_path)
-    trainer.fit(model, datamodule=dm, ckpt_path="runs/dinov2_exp1/dinov2-00-0.000.ckpt")
+    trainer.fit(model, datamodule=dm, ckpt_path=ckpt_path)
+    # trainer.fit(model, datamodule=dm, ckpt_path="runs/dinov2_exp1/dinov2-00-0.000.ckpt")
 
 
     print(f"✅ DINOv2 stage completed. Best: {ckpt_cb.best_model_path}")
