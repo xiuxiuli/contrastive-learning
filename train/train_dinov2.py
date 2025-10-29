@@ -3,7 +3,7 @@ import torch
 from pathlib import Path
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.loggers import MLFlowLogger
-from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor
+from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor, EarlyStopping
 
 from data.datamodule_dino import ImageNet100DinoDataModule
 from models.dino_module import DINOv2LightningModule
@@ -39,6 +39,15 @@ def run(cfg):
     )
     lr_cb = LearningRateMonitor(logging_interval="epoch")
 
+    # --- EarlyStopping callback ---
+    early_stop_cb = EarlyStopping(
+        monitor="train/loss_epoch",  
+        min_delta=train_cfg.early_stop_min_delta,              
+        patience=train_cfg.early_stop_patience,                  
+        mode="min",                  
+        verbose=True
+    )
+
     # Data + Model
     dm = ImageNet100DinoDataModule(cfg.data, train_cfg)
     dm.setup()
@@ -52,7 +61,7 @@ def run(cfg):
         accumulate_grad_batches = train_cfg.accumulate_grad_batches,
         precision=train_cfg.precision,
         logger=mlf_logger,
-        callbacks=[ckpt_cb, lr_cb],
+        callbacks=[ckpt_cb, lr_cb, early_stop_cb],
         log_every_n_steps=20,
         default_root_dir=save_dir,
         gradient_clip_val=train_cfg.gradient_clip_val,
