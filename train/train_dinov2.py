@@ -30,6 +30,7 @@ def run(cfg):
         dirpath=save_dir,
         filename="dinov2-{epoch:02d}-{train_loss_epoch:.3f}",
         save_top_k=2,
+        save_last=True,
         monitor="train/loss_epoch",
         mode="min",
         auto_insert_metric_name=False
@@ -70,7 +71,9 @@ def run(cfg):
         ckpt_path = None
 
     # fit
-    trainer.fit(model, datamodule=dm, ckpt_path=ckpt_path)
+    # trainer.fit(model, datamodule=dm, ckpt_path=ckpt_path)
+    trainer.fit(model, datamodule=dm, ckpt_path="runs/dinov2_exp1/dinov2-00-0.000.ckpt")
+
 
     print(f"✅ DINOv2 stage completed. Best: {ckpt_cb.best_model_path}")
 
