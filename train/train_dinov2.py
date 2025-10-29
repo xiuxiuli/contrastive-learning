@@ -55,7 +55,7 @@ def run(cfg):
         callbacks=[ckpt_cb, lr_cb],
         log_every_n_steps=20,
         default_root_dir=save_dir,
-        gradient_clip_val=1.0,
+        gradient_clip_val=train_cfg.gradient_clip_val,
         deterministic=True,
         benchmark=False,
         fast_dev_run=False,

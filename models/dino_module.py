@@ -32,10 +32,10 @@ class DINOv2LightningModule(pl.LightningModule):
         # loss
         self.loss_fn = DINOLoss(
             out_dim=proj_dim,
-            warmup_teacher_temp=cfg.model.temperature_teacher,
+            warmup_teacher_temp=cfg.model.temperature_teacher_warmup,
             teacher_temp=cfg.model.temperature_teacher,
             warmup_steps=int(cfg.train.warmup_epochs * 1000),  # 粗略按步数近似
-            total_steps=int(cfg.train.warmup_epochs* 1000),
+            total_steps=int(cfg.train.epochs* 1000),
             center_momentum=cfg.model.center_momentum,
         )
 
@@ -103,6 +103,11 @@ class DINOv2LightningModule(pl.LightningModule):
             if ps.data.shape == pt.data.shape:
                 pt.data.mul_(m).add_(ps.data, alpha=(1.0 - m))
 
+        for ms, mt in zip(self.head_s.modules(), self.head_t.modules()):
+            if isinstance(ms, nn.BatchNorm1d):
+                mt.running_mean.data.copy_(ms.running_mean.data)
+                mt.running_var.data.copy_(ms.running_var.data)
+
     def _teacher_momentum(self):
         # cosine schedule (m_t) from m0 to 1
         cur = self.global_step
@@ -125,6 +130,7 @@ class DINOv2LightningModule(pl.LightningModule):
             for v in gviews:
                 zt = self.forward_backbone(self.backbone_t, v)
                 t_out.append(self.head_t(zt))
+            t_out = [t.detach() for t in t_out]
 
         try:
             loss = self.loss_fn(s_out, t_out)
@@ -172,6 +178,13 @@ class DINOv2LightningModule(pl.LightningModule):
         z = self.forward_backbone(self.backbone_s, x)
         out = self.head_s(z)
         return out
+    
+    def validation_step(self, batch, batch_idx):
+        imgs, _ = batch
+        feats = self.forward_backbone(self.backbone_s, imgs)
+        dummy_loss = torch.tensor(0.0, device=self.device)
+        self.log("val/loss", dummy_loss)
+
 # ---------------------------
 # Projection Head
 # --------------------------- 
@@ -268,7 +281,7 @@ class DINOLoss(nn.Module):
         # teacher probs (sharpen + center)
         teacher_logits = torch.cat(teacher_out, dim=0) # [B*N_global, dim]
         teacher_logits = (teacher_logits - self.center)
-        teacher_prob = F.softmax(teacher_logits, dim=-1).detach()
+        teacher_prob = F.softmax(teacher_logits / t, dim=-1).detach()
 
         # student logits (for all views)
         student_logits = torch.cat(student_out, dim=0)  # [B*N_views, dim]

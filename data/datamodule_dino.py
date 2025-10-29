@@ -58,7 +58,7 @@ class MultiCropTransform:
 
         # local views
         self.local_transform = T.Compose([
-            T.RandomResizedCrop(local_size, scale=(0.05, 0.4), ratio=(0.75, 1.33)),
+            T.RandomResizedCrop(local_size, scale=(0.08, 0.4), ratio=(0.75, 1.33)),
             T.RandomHorizontalFlip(p=0.5),
             T.ColorJitter(0.4, 0.4, 0.4, 0.1),
             T.RandomGrayscale(p=0.2),
