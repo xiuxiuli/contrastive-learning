@@ -2,6 +2,7 @@ from typing import List
 import math
 import pytorch_lightning as pl
 import torch
+import torchvision
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision.models import vit_b_16
@@ -156,9 +157,11 @@ class DINOv2LightningModule(pl.LightningModule):
             m = self._teacher_momentum()
             self._update_teacher(m)
             self.log("train/momentum_teacher", m, on_step=True, prog_bar=False)
-        
-        if loss.requires_grad:
-            torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=0.5)
+
+        # --- tensorboard visibility ----
+        if batch_idx % 200 == 0:
+            grid = torchvision.utils.make_grid(views[0][:8])  # 前8张图
+            self.logger.experiment.add_image("train/global_crops", grid, self.global_step)
         
         return loss
 

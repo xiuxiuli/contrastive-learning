@@ -6,7 +6,7 @@ from models.linear_probe_module import LinearProbeModule
 
 import torch
 from pytorch_lightning import seed_everything, Trainer
-from pytorch_lightning.loggers import MLFlowLogger
+from pytorch_lightning.loggers import MLFlowLogger, TensorBoardLogger
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
 
 def run(cfg):
@@ -18,15 +18,16 @@ def run(cfg):
     log_cfg = cfg.globals.log
     data_cfg = cfg.data
 
-    seed_everything(train_cfg.seed)
-
     save_dir = Path(train_cfg.save_dir)
     os.makedirs(save_dir, exist_ok=True)
+
+    seed_everything(train_cfg.seed)
 
     # ---- MLflow logger ----
     experiment_name = log_cfg.experiment_name
     tracking_uri = log_cfg.tracking_uri
     mlf_logger = MLFlowLogger(experiment_name=experiment_name, tracking_uri=tracking_uri)
+    tb_logger = TensorBoardLogger(save_dir="runs", name="linear_probe_exp")
 
     # ---- Checkpoint callback ----
     ckpt_cb = ModelCheckpoint(
@@ -63,7 +64,7 @@ def run(cfg):
         max_epochs=train_cfg.epochs,
         precision=train_cfg.precision,
         accumulate_grad_batches=train_cfg.accumulate_grad_batches,
-        logger = mlf_logger,
+        logger = [tb_logger, mlf_logger],
         callbacks=[ckpt_cb, lr_cb, early_stop_cb],
         log_every_n_steps=train_cfg.log_every_n_steps,
         default_root_dir=save_dir,

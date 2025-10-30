@@ -8,9 +8,13 @@ class LinearProbeModule(pl.LightningModule):
     def __init__(self, cfg):
         super().__init__()
         self.cfg = cfg
+        self.save_hyperparameters(ignore=["cfg"])
+
+        # 1. load pretrained DINO encoder
         ckpt_path = cfg.model.ckpt_path
 
-        # 1. load DINO encoder
+        # if 
+
         dinov2 = DINOv2LightningModule.load_from_checkpoint(ckpt_path, cfg=cfg)
         self.backbone = dinov2.backbone_s
 
