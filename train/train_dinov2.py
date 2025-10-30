@@ -4,6 +4,7 @@ from pathlib import Path
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.loggers import MLFlowLogger
 from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor, EarlyStopping
+from pytorch_lightning.loggers import TensorBoardLogger
 
 from data.datamodule_dino import ImageNet100DinoDataModule
 from models.dino_module import DINOv2LightningModule
@@ -25,6 +26,7 @@ def run(cfg):
     os.makedirs(save_dir, exist_ok=True)
 
     # ---- MLflow logger
+    tb_logger = TensorBoardLogger(save_dir="runs", name="dinov2_exp1")
     mlf_logger = MLFlowLogger(experiment_name=experiment_name, tracking_uri=tracking_uri)
 
     # Lightning callbacks
@@ -60,7 +62,7 @@ def run(cfg):
         max_epochs=train_cfg.epochs,
         accumulate_grad_batches = train_cfg.accumulate_grad_batches,
         precision=train_cfg.precision,
-        logger=mlf_logger,
+        logger=[tb_logger,mlf_logger],
         callbacks=[ckpt_cb, lr_cb, early_stop_cb],
         log_every_n_steps=20,
         default_root_dir=save_dir,

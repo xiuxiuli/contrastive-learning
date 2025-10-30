@@ -117,13 +117,14 @@ class DINOv2LightningModule(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         # batch = (list_of_crops, _)
         views, _ = batch  # views: list[Tensor] len = n_global+n_local
-        # student on all views
+
+        # ---- student forward on all views ----
         s_out = []
         for v in views:
             z = self.forward_backbone(self.backbone_s, v)
             s_out.append(self.head_s(z))
 
-        # teacher only on global views（前2个）
+        # ---- teacher forward (only global views) ----
         with torch.no_grad():
             gviews = views[:2]
             t_out = []
@@ -132,6 +133,7 @@ class DINOv2LightningModule(pl.LightningModule):
                 t_out.append(self.head_t(zt))
             t_out = [t.detach() for t in t_out]
 
+        # ---- compute DINO loss ----
         try:
             loss = self.loss_fn(s_out, t_out)
         except Exception as e:
@@ -139,27 +141,24 @@ class DINOv2LightningModule(pl.LightningModule):
             self.trainer.should_stop = True
             return torch.tensor(0.0, requires_grad=True, device=self.device)
 
+        # ---- NaN & Inf 防护机制 ----
+        if torch.isnan(loss) or not torch.isfinite(loss):
+            print(f"🚨 Invalid loss detected at step {self.global_step}, stopping training safely.")
+            self.trainer.should_stop = True
+            return torch.tensor(0.0, requires_grad=True, device=self.device)
+        
+        # ---- 记录日志 ----
         self.log("train/loss", loss, prog_bar=True, on_step=True, on_epoch=True)
-
         self.log("train/loss_epoch_smooth", loss.detach(), prog_bar=False, on_epoch=True, sync_dist=True)
 
-        # update teacher
+        # ---- update teacher (EMA) ----
         with torch.no_grad():
             m = self._teacher_momentum()
             self._update_teacher(m)
             self.log("train/momentum_teacher", m, on_step=True, prog_bar=False)
         
-        # ---- NaN 防护机制 ----
-        if torch.isnan(loss):
-            print(f"🚨 NaN detected at step {self.global_step}, stopping training safely.")
-            self.trainer.should_stop = True
-            # 返回一个干净的标量，防止反向传播崩溃
-            return torch.tensor(0.0, requires_grad=True, device=loss.device)
-        
-        if not torch.isfinite(loss):
-            self.log("train/nan_step", self.global_step)
-            print(f"🚨 Non-finite loss at step {self.global_step}, skipping batch.")
-            return torch.tensor(0.0, device=self.device, requires_grad=True)
+        if loss.requires_grad:
+            torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=0.5)
         
         return loss
 
@@ -280,11 +279,11 @@ class DINOLoss(nn.Module):
 
         # teacher probs (sharpen + center)
         teacher_logits = torch.cat(teacher_out, dim=0) # [B*N_global, dim]
-        teacher_logits = (teacher_logits - self.center).clamp(-50, 50)
+        teacher_logits = (teacher_logits - self.center).clamp(-30, 30)
         teacher_prob = F.softmax(teacher_logits / t, dim=-1).detach()
 
         # student logits (for all views)
-        student_logits = torch.cat(student_out, dim=0).clamp(-50, 50)  # [B*N_views, dim]
+        student_logits = torch.cat(student_out, dim=0).clamp(-30, 30)  # [B*N_views, dim]
         student_logprob = F.log_softmax(student_logits, dim=-1)
 
         # Cross-entropy between each student view and each teacher view
